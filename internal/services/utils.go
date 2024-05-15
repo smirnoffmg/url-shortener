@@ -3,7 +3,6 @@ package services
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"log"
 	"math"
 	"net/url"
 )
@@ -15,13 +14,7 @@ func randomStr(length int) string {
 	return str[:length]
 }
 
-func UrlIsValid(text string) bool {
+func UrlIsValid(text string) error {
 	_, err := url.ParseRequestURI(text)
-
-	if err != nil {
-		log.Println(err)
-		return false
-	}
-
-	return true
+	return err
 }

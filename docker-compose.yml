@@ -6,17 +6,22 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
+    env_file:
+      - .env
 
-  db:
+  urls_db:
     image: postgres:alpine
-    ports:
-      - "5432:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: mydb
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypass
+      - urls_db_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+  
+  visits_db:
+    image: postgres:alpine
+    volumes:
+      - visits_db_data:/var/lib/postgresql/data
+    env_file:
+      - .env
 
   web-1:
     image: mywebapp
@@ -26,8 +31,11 @@ services:
     expose:
       - "8000"
     depends_on:
-      - db
+      - urls_db
+      - visits_db
       - redis
+    env_file:
+      - .env
 
   web-2:
     image: mywebapp
@@ -37,8 +45,11 @@ services:
     expose:
       - "8000"
     depends_on:
-      - db
+      - urls_db
+      - visits_db
       - redis
+    env_file:
+      - .env
 
   nginx:
     image: nginx:alpine
@@ -49,8 +60,11 @@ services:
     depends_on:
       - web-1
       - web-2
+    env_file:
+      - .env
 
 
 volumes:
   redis_data:
-  db_data:
+  urls_db_data:
+  visits_db_data: 

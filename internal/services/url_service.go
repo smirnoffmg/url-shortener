@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/redis/go-redis/v9"
@@ -14,12 +15,12 @@ const MinAliasLength = 8
 var ctx = context.Background()
 
 type UrlService struct {
-	repo      repositories.Repository
+	urlsRepo  repositories.IUrlRecordsRepository
 	redis     *redis.Client
 	urlLength int
 }
 
-func NewUrlService(repo repositories.Repository, urlLength int) *UrlService {
+func NewUrlService(repo repositories.IUrlRecordsRepository, urlLength int) *UrlService {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     "redis:6379",
 		Password: "", // no password set
@@ -27,20 +28,30 @@ func NewUrlService(repo repositories.Repository, urlLength int) *UrlService {
 	})
 
 	return &UrlService{
-		repo:      repo,
+		urlsRepo:  repo,
 		redis:     rdb,
 		urlLength: max(urlLength, MinAliasLength),
 	}
 }
 
-func (svc *UrlService) Create(url string) *entities.UrlRecord {
-	if !UrlIsValid(url) {
-		return nil
+func (svc *UrlService) Create(url string) (alias string, err error) {
+	if err := UrlIsValid(url); err != nil {
+		return "", err
 	}
 
-	alias := randomStr(svc.urlLength)
-	newRecord := svc.repo.Create(url, alias)
-	return newRecord
+	alias = randomStr(svc.urlLength)
+
+	if err := svc.urlsRepo.Create(&entities.UrlRecord{
+		OriginalUrl: url,
+		Alias:       alias,
+	}); err != nil {
+		log.Fatalf("Error creating url record: %v", err)
+	}
+
+	// store the alias in the cache
+	svc.redis.Set(ctx, alias, url, 5*time.Minute)
+
+	return alias, nil
 }
 
 func (svc *UrlService) Get(alias string) *entities.UrlRecord {
@@ -55,18 +66,14 @@ func (svc *UrlService) Get(alias string) *entities.UrlRecord {
 		}
 	}
 
-	record := svc.repo.Get(alias)
+	record, err := svc.urlsRepo.GetByAlias(alias)
 
-	if record == nil {
+	if err != nil {
 		return nil
 	}
 
 	// store the alias in the cache
 	svc.redis.Set(ctx, alias, record.OriginalUrl, 5*time.Minute)
 
-	// increment the visits
-	svc.repo.IncrementVisits(alias)
-
 	return record
-
 }

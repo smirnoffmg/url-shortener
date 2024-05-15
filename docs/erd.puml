@@ -19,24 +19,11 @@ entity "Visit" as visit {
   + updated_at
   + deleted_at
   --
-  + url_record_alias
+  + alias
   + ip
   + user_agent
 }
 
-entity "Stat" as stat {
-  + id
-  --
-  + created_at
-  + updated_at
-  + deleted_at
-  --
-  + url_record_alias
-  + visits_count
-}
 
 record ||--o{ visit
-record ||--|| stat
-
-
 @enduml
