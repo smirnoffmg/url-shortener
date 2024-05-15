@@ -40,4 +40,4 @@ Example response:
 ERD
 ---
 
-![ERD](docs/images/docs/erd.png)
+![ERD](docs/images/ERD.png)
