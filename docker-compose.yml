@@ -1,0 +1,70 @@
+services:
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    env_file:
+      - .env
+
+  urls_db:
+    image: postgres:alpine
+    volumes:
+      - urls_db_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+  
+  visits_db:
+    image: postgres:alpine
+    volumes:
+      - visits_db_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+
+  web-1:
+    image: mywebapp
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - "8000"
+    depends_on:
+      - urls_db
+      - visits_db
+      - redis
+    env_file:
+      - .env
+
+  web-2:
+    image: mywebapp
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - "8000"
+    depends_on:
+      - urls_db
+      - visits_db
+      - redis
+    env_file:
+      - .env
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - web-1
+      - web-2
+    env_file:
+      - .env
+
+
+volumes:
+  redis_data:
+  urls_db_data:
+  visits_db_data: 
