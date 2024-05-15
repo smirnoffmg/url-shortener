@@ -1,0 +1,42 @@
+@startuml ERD
+
+entity "UrlRecord" as record {
+  + id
+  --
+  + created_at
+  + updated_at
+  + deleted_at
+  --
+  + original_url
+  + alias
+}
+
+
+entity "Visit" as visit {
+  + id
+  --
+  + created_at
+  + updated_at
+  + deleted_at
+  --
+  + url_record_alias
+  + ip
+  + user_agent
+}
+
+entity "Stat" as stat {
+  + id
+  --
+  + created_at
+  + updated_at
+  + deleted_at
+  --
+  + url_record_alias
+  + visits_count
+}
+
+record ||--o{ visit
+record ||--|| stat
+
+
+@enduml

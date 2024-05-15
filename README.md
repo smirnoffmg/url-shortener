@@ -36,3 +36,8 @@ Example response:
     "visits": 0
 }
 ```
+
+ERD
+---
+
+![ERD](docs/images/docs/erd.png)
